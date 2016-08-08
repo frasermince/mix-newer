@@ -92,8 +92,9 @@ defmodule Mix.Tasks.Newer do
   end
 
   defp postprocess_file_hierarchy(user_config, actions) do
-    {files, template_files, _directories} = get_files_and_directories()
+    {files, template_files, directories} = get_files_and_directories()
 
+    substitute_variables(directories, user_config)
     files
     |> reject_auxilary_files
     |> substitute_variables(user_config)
@@ -132,7 +133,8 @@ defmodule Mix.Tasks.Newer do
     paths
     |> Enum.map(fn path ->
       new_path = substitute_variables_in_string(path, config)
-      if path != new_path do
+      regex = ~r/\}(\.\w+)?$/
+      if path != new_path && Regex.match?(regex, path) do
         :ok = :file.rename(path, new_path)
       end
       new_path
